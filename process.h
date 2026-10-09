@@ -70,6 +70,7 @@ bool started = false;
   std::size_t nextIoIndex = 0;
   // динамический приоритет (для старения)
   int dynamicPriority = 0;
+  std::uint64_t deadline = 0;
   // текущая очередь (для MLFQ)
   int queueLevel = 0;
 

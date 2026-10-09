@@ -9,7 +9,7 @@
 #include <sstream>
 #include <string>
 #include <vector>
-// Таблица по каждому процессу (вызывать после runSimulation)
+
 inline void printProcessTable(const std::vector<Process>& procs) {
   std::cout << std::left << std::setw(6) << "Proc" << std::right
             << std::setw(8) << "arrival" << std::setw(7) << "burst"
@@ -24,4 +24,52 @@ inline void printProcessTable(const std::vector<Process>& procs) {
               << std::setw(7) << p.responseTime << std::setw(7) << p.ioWaitTime
               << "\n";
   }
+}
+
+inline bool saveSet(const std::string& path, const std::vector<Process>& procs) {
+  std::ofstream out(path);
+  if (!out) return false;
+  out << "# pid name arrival burst priority deadline io\n";
+  for (const auto& p : procs) {
+    out << p.pid << ' ' << p.name << ' ' << p.arrivalTime << ' ' << p.burstTime << ' '
+        << p.priority << ' ' << p.deadline << ' ';
+    if (p.ioBlocks.empty()) out << '-';
+    for (std::size_t i = 0; i < p.ioBlocks.size(); ++i) {
+      if (i) out << ',';
+      out << p.ioBlocks[i].atTick << ':' << p.ioBlocks[i].duration;
+    }
+    out << '\n';
+  }
+  return true;
+}
+
+inline bool loadSet(const std::string& path, std::vector<Process>& procs) {
+  std::ifstream in(path);
+  if (!in) return false;
+  std::string line;
+  while (std::getline(in, line)) {
+    if (line.empty() || line[0] == '#') continue;
+    std::istringstream ss(line);
+    Process p;
+    std::string io;
+    if (!(ss >> p.pid >> p.name >> p.arrivalTime >> p.burstTime >>
+          p.priority >> p.deadline >> io))
+      return false;
+    p.remainingTime = p.burstTime;
+    p.dynamicPriority = p.priority;
+    if (io != "-") {
+      std::istringstream is(io);
+      std::string item;
+      while (std::getline(is, item, ',')) {
+        std::size_t colon = item.find(':');
+        if (colon == std::string::npos) return false;
+        IoBlock b{};
+        b.atTick = std::stoull(item.substr(0, colon));
+        b.duration = std::stoull(item.substr(colon + 1));
+        p.ioBlocks.push_back(b);
+      }
+    }
+    procs.push_back(p);
+  }
+  return true;
 }
