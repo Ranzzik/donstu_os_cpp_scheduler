@@ -6,6 +6,7 @@
 #include "mlfq.h"
 #include "simulator.h"
 #include "testsets.h"
+#include "hrrn.h"
 
 #include <iostream>
 #include <iomanip>
@@ -79,6 +80,27 @@ void printGantt(const SimResult& r) {
   std::cout << "\n";
 }
 
+std::vector<Process> makeHrrnTestSet() {
+  std::vector<Process> procs;
+  auto add = [&](int pid, const std::string& name, std::uint64_t arrival, std::uint64_t burst) {
+    Process p;
+    p.pid = pid;
+    p.name = name;
+    p.arrivalTime = arrival;
+    p.burstTime = burst;
+    p.remainingTime = burst;
+    p.priority = 1;
+    p.dynamicPriority = 1;
+    procs.push_back(p);
+  };
+  add(1, "A", 0, 4);
+  add(2, "L", 1, 6);
+  add(3, "S1", 4, 2);
+  add(4, "S2", 5, 1);
+  return procs;
+}
+
+
 int main() {
   std::cout << "Case 1: CPU-bound\n";
   {
@@ -130,6 +152,19 @@ int main() {
   FcfsScheduler a(set), b(loaded);
   printResult(runSimulation(a));
   printResult(runSimulation(b));   // строки должны совпасть
+}
+
+{
+  std::cout << "\n--- Задание 3: Сравнение SJF и HRRN ---\n";
+  auto setSjf = makeHrrnTestSet();
+  SjfScheduler sjf(setSjf);
+  std::cout << "Sjf result:\n";
+  printResult(runSimulation(sjf));
+  
+  auto setHrrn = makeHrrnTestSet();
+  HrrnScheduler hrrn(setHrrn);
+  std::cout << "Hrrn result:\n";
+  printResult(runSimulation(hrrn));
 }
 
   return 0;
