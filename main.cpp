@@ -5,6 +5,7 @@
 #include "priority.h"
 #include "mlfq.h"
 #include "simulator.h"
+#include "testsets.h"
 
 #include <iostream>
 #include <iomanip>
@@ -113,7 +114,8 @@ int main() {
     auto set = makeTestSet();
     RrScheduler rr(set, 2);
     SimResult r = runSimulation(rr);
-    printGantt(r);
+    std::cout << "\nPo Processam, RR (q=2) :\n";
+    printProcessTable(rr.processes());
   }
 
   return 0;

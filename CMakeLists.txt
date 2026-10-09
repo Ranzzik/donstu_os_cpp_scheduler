@@ -15,6 +15,7 @@ add_executable(donstu_os_cpp_scheduler main.cpp
     priority.h
     mlfq.h
     simulator.h
+    testsets.h
     simulator.cpp
 )
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
