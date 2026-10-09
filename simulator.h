@@ -10,6 +10,8 @@
 struct SimResult {
   std::string algorithm;
   double avgWaiting = 0;
+  std::uint64_t overheadTicks = 0;
+  double overheadPercent =  0;
   double avgTurnaround = 0;
   double avgResponse = 0;
   double cpuUtilization = 0;
@@ -20,4 +22,4 @@ struct SimResult {
 };
 
 // Прогон одного планировщика
-SimResult runSimulation(Scheduler& sched, std::uint64_t maxTicks = 100000);
+SimResult runSimulation(Scheduler& sched, std::uint64_t maxTicks = 100000, std::uint64_t swsitchCost = 0);

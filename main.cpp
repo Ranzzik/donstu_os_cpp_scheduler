@@ -75,6 +75,7 @@ void printGantt(const SimResult& r) {
   for (auto& [pid, span] : r.gantt) {
     std::cout << "  [" << span.first << "-" << span.second << ") ";
     if (pid == -1) std::cout << "IDLE\n";
+	else if (pid == -2) std::cout << "CS\n";
     else std::cout << "P" << pid << "\n";
   }
   std::cout << "\n";
@@ -166,6 +167,25 @@ int main() {
   std::cout << "Hrrn result:\n";
   printResult(runSimulation(hrrn));
 }
+
+{    auto set = makeTestSet();
+    std::cout << "\n--- Задание 4: Результаты эксперимента с накладными расходами ---\n";
+    for (std::uint64_t cost : {0, 1}) {
+      std::cout << "\nСтоимость переключения контекста (switchCost) = " << cost << "\n";
+      std::cout <<  "Алгоритм   | Ср. Ожидание | Ср. Оборотное | CPU %    | Накладные расходы %\n";
+      std::cout << "---------------------------------------------------------------------------\n";
+      for (std::uint64_t q : {1, 2, 4, 8}) {
+        RrScheduler rr(set, q);
+        SimResult r = runSimulation(rr, 100000, cost);
+        std::cout << "RR (q=" << q << ")   | " 
+                  << std::setw(12) << std::fixed << std::setprecision(2) << r.avgWaiting << " | "
+                  << std::setw(13) << r.avgTurnaround << " | "
+                  << std::setw(7) << r.cpuUtilization << "% | "
+                  << std::setw(17) << r.overheadPercent << "%\n";
+      }
+    }
+  }
+
 
   return 0;
 }
