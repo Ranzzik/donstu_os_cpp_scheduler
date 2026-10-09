@@ -90,6 +90,8 @@ SimResult runSimulation(Scheduler& sched, std::uint64_t maxTicks, std::uint64_t 
       }
       // Проверяем завершение процесса
       else if (p->remainingTime == 0) {
+	p->state = ProcessState::TERMINATED;
+	p->finishTime = tick + 1;
         sched.onProcessFinished(currentPid, tick + 1);
         currentPid = -1;
       }
