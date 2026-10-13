@@ -298,7 +298,36 @@ int main() {
     }
   }
 
-
+{
+    std::cout << "\n--- zad 7---\n";
+    std::cout << "Algoritm     | Cores |  wait  |  turn  |  resp  |  CPU %  | all takt's\n";
+    std::cout << "--------------------------------------------------------------------------\n";
+    for (int cores : {1, 2, 4}) {
+      auto setFcfs = makeTestSet();
+      FcfsScheduler fcfs(setFcfs);
+      SimResult r1 = runSimulationMulti(fcfs, cores);
+      std::cout << std::left << std::setw(12) << "FCFS" << " | " 
+                << std::right << std::setw(4) << cores << " | "
+                << std::fixed << std::setprecision(2)
+                << std::setw(6) << r1.avgWaiting << " | "
+                << std::setw(6) << r1.avgTurnaround << " | "
+                << std::setw(6) << r1.avgResponse << " | "
+                << std::setw(6) << r1.cpuUtilization << "% | "
+                << std::setw(8) << r1.totalTicks << "\n";
+                
+      auto setSjf = makeTestSet();
+      SjfScheduler sjf(setSjf);
+      SimResult r2 = runSimulationMulti(sjf, cores);
+      std::cout << std::left << std::setw(12) << "SJF" << " | " 
+                << std::right << std::setw(4) << cores << " | "
+                << std::fixed << std::setprecision(2)
+                << std::setw(6) << r2.avgWaiting << " | "
+                << std::setw(6) << r2.avgTurnaround << " | "
+                << std::setw(6) << r2.avgResponse << " | "
+                << std::setw(6) << r2.cpuUtilization << "% | "
+                << std::setw(8) << r2.totalTicks << "\n";
+    }
+  }
 
   return 0;
 }
