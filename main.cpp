@@ -101,6 +101,30 @@ std::vector<Process> makeHrrnTestSet() {
   return procs;
 }
 
+std::vector<Process> makeConvoySet() {
+  std::vector<Process> procs;
+  auto add = [&](int pid, const std::string& name, std::uint64_t arrival,
+                 std::uint64_t burst, int priority,
+                 std::vector<IoBlock> io = {}) {
+    Process p;
+    p.pid = pid; p.name = name;
+    p.arrivalTime = arrival;
+    p.burstTime = burst;
+    p.remainingTime = burst;
+    p.priority = priority;
+    p.dynamicPriority = priority;
+    p.ioBlocks = std::move(io);
+    procs.push_back(p);
+  };
+  add(1, "CPU1", 0, 20, 2);
+  add(2, "IO1",  1,  6, 1, {{1, 4}, {2, 4}, {3, 4}, {4, 4}, {5, 4}});
+  add(3, "IO2",  2,  6, 1, {{1, 4}, {2, 4}, {3, 4}, {4, 4}, {5, 4}});
+  add(4, "CPU2", 3, 12, 3);
+  return procs;
+}
+
+
+
 
 int main() {
   std::cout << "Case 1: CPU-bound\n";
@@ -199,6 +223,38 @@ int main() {
               << std::string(r.contextSwitches, '#') << "\n";
   }
 }
+
+{
+    std::cout << "\n---zad 6 ---n";
+    
+    
+    auto setFcfs = makeConvoySet();
+    FcfsScheduler fcfs(setFcfs);
+    std::cout << "\nFCFS:\n";
+    printResult(runSimulation(fcfs));
+    printProcessTable(fcfs.processes());
+
+    
+    auto setSrtn = makeConvoySet();
+    SrtnScheduler srtn(setSrtn);
+    std::cout << "\nSRTN:\n";
+    printResult(runSimulation(srtn));
+    printProcessTable(srtn.processes());
+
+    auto setRr = makeConvoySet();
+    RrScheduler rr(setRr, 4);
+    std::cout << "\nRR (q=4):\n";
+    printResult(runSimulation(rr));
+    printProcessTable(rr.processes());
+
+    
+    auto setMlfq = makeConvoySet();
+    MlfqScheduler mlfq(setMlfq);
+    std::cout << "\nMLFQ:\n";
+    printResult(runSimulation(mlfq));
+    printProcessTable(mlfq.processes());
+  }
+
 
 
   return 0;

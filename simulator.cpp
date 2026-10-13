@@ -74,28 +74,41 @@ SimResult runSimulation(Scheduler& sched, std::uint64_t maxTicks, std::uint64_t 
       switchLeft--;
       overheadTicks++;
     } else if (currentPid != -1) {
-      Process* p = sched.find(currentPid);
-      p->state = ProcessState::RUNNING;
-      p->executedTicks++;
-      p->remainingTime--;
-      busyTicks++;
-      ranPid = currentPid;
+	Process* p = sched.find(currentPid);
+      if (p) {
+        ranPid = currentPid;
 
-      // Проверяем ввод-вывод
-      if (p->nextIoIndex < p->ioBlocks.size() &&
-          p->executedTicks == p->ioBlocks[p->nextIoIndex].atTick) {
-        p->ioReturnTick = tick + 1 + p->ioBlocks[p->nextIoIndex].duration;
-        sched.onProcessBlocked(currentPid, tick);
-        currentPid = -1;
+        if (p->remainingTime > 0) {
+          p->remainingTime--;
+        }
+        p->executedTicks++;
+        busyTicks++;
+        sched.onProcessRanTick(currentPid);
+
+        // РџСЂРѕРІРµСЂСЏРµРј РІРІРѕРґ-РІС‹РІРѕРґ
+        if (p->nextIoIndex < p->ioBlocks.size() &&
+            p->executedTicks == p->ioBlocks[p->nextIoIndex].atTick) {
+          
+          if (p->remainingTime == 0) {
+            p->state = ProcessState::TERMINATED;
+            p->finishTime = tick + 1;
+            sched.onProcessFinished(currentPid, tick + 1);
+            currentPid = -1;
+          } else {
+            p->state = ProcessState::WAITING;
+            p->ioReturnTick = tick + 1 + p->ioBlocks[p->nextIoIndex].duration;
+            sched.onProcessBlocked(currentPid, tick);
+            currentPid = -1;
+          }
+        }
+        // РџСЂРѕРІРµСЂСЏРµРј Р·Р°РІРµСЂС€РµРЅРёРµ РїСЂРѕС†РµСЃСЃР°
+        else if (p->remainingTime == 0) {
+          p->state = ProcessState::TERMINATED;
+          p->finishTime = tick + 1;
+          sched.onProcessFinished(currentPid, tick + 1);
+          currentPid = -1;
+        }
       }
-      // Проверяем завершение процесса
-      else if (p->remainingTime == 0) {
-	p->state = ProcessState::TERMINATED;
-	p->finishTime = tick + 1;
-        sched.onProcessFinished(currentPid, tick + 1);
-        currentPid = -1;
-      }
-    }
 
 //7a Все, кто остался в READY, ждали этот такт
     for (auto& p : procs) {
@@ -126,6 +139,7 @@ SimResult runSimulation(Scheduler& sched, std::uint64_t maxTicks, std::uint64_t 
         res.gantt.push_back({-1, {tick, tick + 1}});
       }
     }
+}
 prevPid = overheadTick ? currentPid : ranPid;
 tick++;
 }
@@ -159,3 +173,4 @@ res.overheadPercent = tick > 0 ? 100.0 * overheadTicks / tick : 0.0;
 
   return res;
 }
+
