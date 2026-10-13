@@ -7,11 +7,14 @@
 #include "simulator.h"
 #include "testsets.h"
 #include "hrrn.h"
-
 #include <iostream>
 #include <iomanip>
 #include <vector>
 #include <memory>
+#include <functional>
+
+
+
 
 std::vector<Process> makeTestSet() {
   std::vector<Process> procs;
@@ -253,6 +256,46 @@ int main() {
     std::cout << "\nMLFQ:\n";
     printResult(runSimulation(mlfq));
     printProcessTable(mlfq.processes());
+  }
+
+  {
+    std::cout << "\n--- zad 10 ---\n";
+    
+    // Р“РµРЅРµСЂРёСЂСѓРµРј Рё СЃРѕС…СЂР°РЅСЏРµРј 5 РЅР°Р±РѕСЂРѕРІ РІ С„Р°Р№Р»С‹
+    const int sizes[5] = {12, 14, 16, 18, 20};
+    for (unsigned seed = 1; seed <= 5; ++seed) {
+      saveSet("sets/set" + std::to_string(seed) + ".txt", makeRandomSet(seed, sizes[seed - 1]));
+    }
+
+    // РќР°СЃС‚СЂР°РёРІР°РµРј С„Р°Р±СЂРёРєСѓ РґР»СЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРѕРіРѕ РїСЂРѕРіРѕРЅР° Р°Р»РіРѕСЂРёС‚РјРѕРІ
+    using Factory = std::function<std::unique_ptr<Scheduler>(const std::vector<Process>&)>;
+    std::vector<std::pair<std::string, Factory>> algos = {
+      {"FCFS", [](const std::vector<Process>& s) { return std::make_unique<FcfsScheduler>(s); }},
+      {"SJF", [](const std::vector<Process>& s) { return std::make_unique<SjfScheduler>(s); }},
+      {"SRTN", [](const std::vector<Process>& s) { return std::make_unique<SrtnScheduler>(s); }},
+      {"HRRN", [](const std::vector<Process>& s) { return std::make_unique<HrrnScheduler>(s); }},
+      {"RR q=4", [](const std::vector<Process>& s) { return std::make_unique<RrScheduler>(s, 4); }},
+      {"MLFQ", [](const std::vector<Process>& s) { return std::make_unique<MlfqScheduler>(s); }}
+    };
+
+    std::cout << "Average waiting time (РЎСЂРµРґРЅРµРµ РІСЂРµРјСЏ РѕР¶РёРґР°РЅРёСЏ):\n";
+    std::cout << std::left << std::setw(12) << "Algorithm" << std::right;
+    for (int i = 1; i <= 5; ++i) std::cout << std::setw(9) << "set " + std::to_string(i);
+    std::cout << std::setw(9) << "average" << "\n";
+    std::cout << "-----------------------------------------------------------------\n";
+
+    for (auto& [label, make] : algos) {
+      std::cout << std::left << std::setw(12) << label << std::right;
+      double sum = 0;
+      for (unsigned seed = 1; seed <= 5; ++seed) {
+        auto set = makeRandomSet(seed, sizes[seed - 1]);
+        auto sched = make(set);
+        SimResult r = runSimulation(*sched);
+        sum += r.avgWaiting;
+        std::cout << std::setw(9) << std::fixed << std::setprecision(2) << r.avgWaiting;
+      }
+      std::cout << std::setw(9) << sum / 5 << "\n";
+    }
   }
 
 
